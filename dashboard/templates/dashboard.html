@@ -1,0 +1,431 @@
+<!-- dashboard/templates/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICT Trading Bot Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #2a2a4a;
+        }
+        .header h1 { 
+            font-size: 28px; 
+            font-weight: 700;
+            background: linear-gradient(90deg, #00d4ff, #7b2ffc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #00ff88;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #14141f;
+            border: 1px solid #2a2a4a;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+        .stat-card .label {
+            font-size: 14px;
+            color: #8888aa;
+            margin-top: 4px;
+        }
+        
+        /* Setup List */
+        .setups-section {
+            background: #14141f;
+            border: 1px solid #2a2a4a;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .setups-section h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #aabbdd;
+        }
+        .setup-item {
+            display: grid;
+            grid-template-columns: auto auto 1fr auto auto auto;
+            gap: 16px;
+            align-items: center;
+            padding: 12px 16px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 4px solid #444;
+            transition: background 0.2s;
+        }
+        .setup-item:hover { background: #222244; }
+        .setup-item.buy { border-left-color: #00ff88; }
+        .setup-item.sell { border-left-color: #ff4444; }
+        .setup-item .symbol {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .setup-item .type {
+            font-weight: 700;
+            font-size: 14px;
+            padding: 2px 10px;
+            border-radius: 4px;
+            background: #2a2a4a;
+        }
+        .setup-item .type.buy { color: #00ff88; }
+        .setup-item .type.sell { color: #ff4444; }
+        .setup-item .price {
+            font-family: 'Courier New', monospace;
+            color: #aabbdd;
+        }
+        .setup-item .session {
+            font-size: 12px;
+            color: #666;
+            background: #1a1a2e;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        .setup-item .time {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .controls select, .controls input {
+            padding: 8px 16px;
+            background: #1a1a2e;
+            border: 1px solid #2a2a4a;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        .controls button {
+            padding: 8px 24px;
+            background: linear-gradient(90deg, #00d4ff, #7b2ffc);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .controls button:hover { opacity: 0.8; }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .setup-item {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        /* Session indicator */
+        .session-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: #1a1a2e;
+            border-radius: 20px;
+            border: 1px solid #2a2a4a;
+        }
+        .session-indicator .active {
+            color: #00ff88;
+            font-weight: 600;
+        }
+        .session-indicator .inactive {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚀 ICT Trading Bot Dashboard</h1>
+            <div class="status">
+                <span class="status-dot"></span>
+                <span>Live Monitoring</span>
+                <span id="session-display" class="session-indicator">
+                    <span class="active">●</span>
+                    <span>Asian</span>
+                </span>
+                <span id="killzone-display" style="color: #ffaa00;">⚡ Killzone Active</span>
+                <span style="margin-left: auto; color: #666;" id="last-scan">Last scan: --</span>
+            </div>
+        </div>
+        
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="number" id="total-setups">0</div>
+                <div class="label">Total Setups</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="win-rate">0%</div>
+                <div class="label">Win Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="total-pl">$0</div>
+                <div class="label">Total P/L</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="scans">0</div>
+                <div class="label">Scans Today</div>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="controls">
+            <select id="symbol-filter">
+                <option value="">All Symbols</option>
+            </select>
+            <select id="type-filter">
+                <option value="">All Types</option>
+                <option value="BUY">Buy</option>
+                <option value="SELL">Sell</option>
+            </select>
+            <button onclick="refreshData()">🔄 Refresh</button>
+            <button onclick="autoRefresh()">⏱️ Auto Refresh</button>
+        </div>
+        
+        <!-- Setups -->
+        <div class="setups-section">
+            <h2>📊 Recent Setups</h2>
+            <div id="setups-list">
+                <div style="text-align: center; color: #666; padding: 40px;">
+                    Loading setups...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval = null;
+        let refreshTimer = null;
+
+        // Load symbols for filter
+        async function loadSymbols() {
+            try {
+                const response = await fetch('/api/symbols');
+                const symbols = await response.json();
+                const select = document.getElementById('symbol-filter');
+                symbols.forEach(symbol => {
+                    const option = document.createElement('option');
+                    option.value = symbol;
+                    option.textContent = symbol;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading symbols:', error);
+            }
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch('/api/statistics?days=7');
+                const stats = await response.json();
+                document.getElementById('total-setups').textContent = stats.total_setups || 0;
+                document.getElementById('win-rate').textContent = stats.win_rate + '%' || '0%';
+                document.getElementById('total-pl').textContent = '$' + (stats.total_pl || 0).toFixed(2);
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        // Load setups
+        async function loadSetups() {
+            const symbol = document.getElementById('symbol-filter').value;
+            const type = document.getElementById('type-filter').value;
+            
+            let url = '/api/setups?limit=50';
+            if (symbol) url += `&symbol=${symbol}`;
+            
+            try {
+                const response = await fetch(url);
+                const setups = await response.json();
+                
+                const container = document.getElementById('setups-list');
+                if (!setups || setups.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; color: #666; padding: 40px;">
+                            No setups found
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                setups.forEach(setup => {
+                    const typeClass = setup.setup_type.toLowerCase();
+                    const sessionEmojis = {
+                        'asian': '🌏',
+                        'london': '🇬🇧',
+                        'new_york': '🗽',
+                        'new_york_afternoon': '🌆',
+                        'power_hour': '⚡'
+                    };
+                    const sessionEmoji = sessionEmojis[setup.session] || '🕐';
+                    
+                    // Filter by type
+                    if (type && setup.setup_type !== type) return;
+                    
+                    html += `
+                        <div class="setup-item ${typeClass}">
+                            <span class="symbol">${setup.symbol}</span>
+                            <span class="type ${typeClass}">${setup.setup_type}</span>
+                            <span class="price">Entry: ${setup.entry_price.toFixed(5)}</span>
+                            <span class="price">SL: ${setup.stop_loss.toFixed(5)}</span>
+                            <span class="price">TP: ${setup.take_profit.toFixed(5)}</span>
+                            <span class="session">${sessionEmoji} ${setup.session || 'Unknown'}</span>
+                            <span class="time">${new Date(setup.timestamp).toLocaleTimeString()}</span>
+                            <span style="background: #2a2a4a; padding: 2px 8px; border-radius: 12px; font-size: 12px;">
+                                ${setup.confidence}%
+                            </span>
+                        </div>
+                    `;
+                });
+                
+                if (!html) {
+                    container.innerHTML = `
+                        <div style="text-align: center; color: #666; padding: 40px;">
+                            No setups match the filter
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading setups:', error);
+            }
+        }
+
+        // Load session info
+        async function loadSession() {
+            try {
+                const response = await fetch('/api/session');
+                const data = await response.json();
+                
+                const display = document.getElementById('session-display');
+                display.innerHTML = `
+                    <span class="${data.current_session !== 'off_session' ? 'active' : 'inactive'}">●</span>
+                    <span>${data.current_session || 'Off Session'}</span>
+                `;
+                
+                const killzone = document.getElementById('killzone-display');
+                if (data.is_killzone) {
+                    killzone.style.display = 'inline';
+                } else {
+                    killzone.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading session:', error);
+            }
+        }
+
+        // Load status
+        async function loadStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const status = await response.json();
+                document.getElementById('scans').textContent = status.scanning || 0;
+                document.getElementById('last-scan').textContent = 
+                    status.last_scan ? `Last scan: ${new Date(status.last_scan).toLocaleTimeString()}` : 'No scans yet';
+            } catch (error) {
+                console.error('Error loading status:', error);
+            }
+        }
+
+        // Refresh all data
+        async function refreshData() {
+            await Promise.all([
+                loadStatistics(),
+                loadSetups(),
+                loadSession(),
+                loadStatus()
+            ]);
+        }
+
+        // Toggle auto-refresh
+        function autoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                event.target.textContent = '⏱️ Auto Refresh';
+                event.target.style.background = '';
+            } else {
+                autoRefreshInterval = setInterval(refreshData, 10000);
+                event.target.textContent = '⏹️ Stop Auto Refresh';
+                event.target.style.background = '#ff4444';
+            }
+        }
+
+        // Filter change events
+        document.getElementById('symbol-filter').addEventListener('change', loadSetups);
+        document.getElementById('type-filter').addEventListener('change', loadSetups);
+
+        // Initial load
+        loadSymbols();
+        refreshData();
+        
+        // Refresh every 30 seconds if auto-refresh not enabled
+        setInterval(() => {
+            if (!autoRefreshInterval) {
+                refreshData();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
