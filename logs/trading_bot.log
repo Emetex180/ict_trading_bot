@@ -654,3 +654,269 @@
 2026-07-06 18:49:05,709 - main - INFO - Scanning crypto assets (4 symbols)
 2026-07-06 18:49:05,710 - main - INFO - No setups found in this scan
 2026-07-06 18:49:05,710 - main - INFO - Stats: 53 scans, 0 total setups found
+2026-07-06 18:50:05,709 - main - INFO - Active sessions: afternoon
+2026-07-06 18:50:05,710 - main - INFO - Starting full market scan...
+2026-07-06 18:50:05,711 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 18:50:05,712 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 18:50:06,074 - main - WARNING - Incomplete data for NAS100
+2026-07-06 18:50:06,388 - main - WARNING - Incomplete data for US30
+2026-07-06 18:50:06,703 - main - WARNING - Incomplete data for SPX500
+2026-07-06 18:50:07,019 - main - WARNING - Incomplete data for UK100
+2026-07-06 18:50:07,315 - main - WARNING - Incomplete data for GER40
+2026-07-06 18:50:07,315 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 18:50:07,316 - main - INFO - No setups found in this scan
+2026-07-06 18:50:07,316 - main - INFO - Stats: 54 scans, 0 total setups found
+2026-07-06 18:51:07,316 - main - INFO - Active sessions: afternoon
+2026-07-06 18:51:07,316 - main - INFO - Starting full market scan...
+2026-07-06 18:51:07,316 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 18:51:07,317 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 18:51:07,748 - main - WARNING - Incomplete data for NAS100
+2026-07-06 18:51:08,098 - main - WARNING - Incomplete data for US30
+2026-07-06 18:51:08,417 - main - WARNING - Incomplete data for SPX500
+2026-07-06 18:51:08,760 - main - WARNING - Incomplete data for UK100
+2026-07-06 18:51:09,106 - main - WARNING - Incomplete data for GER40
+2026-07-06 18:51:09,107 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 18:51:09,108 - main - INFO - No setups found in this scan
+2026-07-06 18:51:09,108 - main - INFO - Stats: 55 scans, 0 total setups found
+2026-07-06 18:52:09,126 - main - INFO - Active sessions: afternoon
+2026-07-06 18:52:09,126 - main - INFO - Starting full market scan...
+2026-07-06 18:52:09,127 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 18:52:09,128 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 18:52:09,465 - main - WARNING - Incomplete data for NAS100
+2026-07-06 18:52:09,769 - main - WARNING - Incomplete data for US30
+2026-07-06 18:52:10,118 - main - WARNING - Incomplete data for SPX500
+2026-07-06 18:52:10,441 - main - WARNING - Incomplete data for UK100
+2026-07-06 18:52:10,774 - main - WARNING - Incomplete data for GER40
+2026-07-06 18:52:10,774 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 18:52:10,775 - main - INFO - No setups found in this scan
+2026-07-06 18:52:10,775 - main - INFO - Stats: 56 scans, 0 total setups found
+2026-07-06 18:53:10,787 - main - INFO - Active sessions: afternoon
+2026-07-06 18:53:10,787 - main - INFO - Starting full market scan...
+2026-07-06 18:53:10,787 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 18:53:10,788 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 18:53:11,107 - main - WARNING - Incomplete data for NAS100
+2026-07-06 18:53:11,472 - main - WARNING - Incomplete data for US30
+2026-07-06 18:53:11,776 - main - WARNING - Incomplete data for SPX500
+2026-07-06 18:53:12,067 - main - WARNING - Incomplete data for UK100
+2026-07-06 18:53:12,372 - main - WARNING - Incomplete data for GER40
+2026-07-06 18:53:12,372 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 18:53:12,373 - main - INFO - No setups found in this scan
+2026-07-06 18:53:12,374 - main - INFO - Stats: 57 scans, 0 total setups found
+2026-07-06 18:54:12,388 - main - INFO - Active sessions: afternoon
+2026-07-06 18:54:12,389 - main - INFO - Starting full market scan...
+2026-07-06 18:54:12,389 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 18:54:12,390 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 18:54:12,827 - main - WARNING - Incomplete data for NAS100
+2026-07-06 18:54:13,128 - main - WARNING - Incomplete data for US30
+2026-07-06 18:54:13,425 - main - WARNING - Incomplete data for SPX500
+2026-07-06 18:54:13,728 - main - WARNING - Incomplete data for UK100
+2026-07-06 18:54:14,035 - main - WARNING - Incomplete data for GER40
+2026-07-06 18:54:14,035 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 18:54:14,036 - main - INFO - No setups found in this scan
+2026-07-06 18:54:14,036 - main - INFO - Stats: 58 scans, 0 total setups found
+2026-07-06 18:55:14,052 - main - INFO - Active sessions: afternoon
+2026-07-06 18:55:14,053 - main - INFO - Starting full market scan...
+2026-07-06 18:55:14,053 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 18:55:14,054 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 18:55:14,423 - main - WARNING - Incomplete data for NAS100
+2026-07-06 18:55:14,757 - main - WARNING - Incomplete data for US30
+2026-07-06 18:55:15,094 - main - WARNING - Incomplete data for SPX500
+2026-07-06 18:55:15,415 - main - WARNING - Incomplete data for UK100
+2026-07-06 18:55:15,745 - main - WARNING - Incomplete data for GER40
+2026-07-06 18:55:15,746 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 18:55:15,746 - main - INFO - No setups found in this scan
+2026-07-06 18:55:15,747 - main - INFO - Stats: 59 scans, 0 total setups found
+2026-07-06 18:56:15,751 - main - INFO - Active sessions: afternoon
+2026-07-06 18:56:15,752 - main - INFO - Starting full market scan...
+2026-07-06 18:56:15,753 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 18:56:15,754 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 18:56:16,089 - main - WARNING - Incomplete data for NAS100
+2026-07-06 18:56:16,406 - main - WARNING - Incomplete data for US30
+2026-07-06 18:56:16,703 - main - WARNING - Incomplete data for SPX500
+2026-07-06 18:56:17,011 - main - WARNING - Incomplete data for UK100
+2026-07-06 18:56:17,310 - main - WARNING - Incomplete data for GER40
+2026-07-06 18:56:17,311 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 18:56:17,312 - main - INFO - No setups found in this scan
+2026-07-06 18:56:17,312 - main - INFO - Stats: 60 scans, 0 total setups found
+2026-07-06 18:57:17,325 - main - INFO - Active sessions: afternoon
+2026-07-06 18:57:17,326 - main - INFO - Starting full market scan...
+2026-07-06 18:57:17,326 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 18:57:17,327 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 18:57:17,781 - main - WARNING - Incomplete data for NAS100
+2026-07-06 18:57:18,123 - main - WARNING - Incomplete data for US30
+2026-07-06 18:57:18,438 - main - WARNING - Incomplete data for SPX500
+2026-07-06 18:57:18,757 - main - WARNING - Incomplete data for UK100
+2026-07-06 18:57:19,075 - main - WARNING - Incomplete data for GER40
+2026-07-06 18:57:19,075 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 18:57:19,075 - main - INFO - No setups found in this scan
+2026-07-06 18:57:19,076 - main - INFO - Stats: 61 scans, 0 total setups found
+2026-07-06 18:58:19,090 - main - INFO - Active sessions: afternoon
+2026-07-06 18:58:19,091 - main - INFO - Starting full market scan...
+2026-07-06 18:58:19,091 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 18:58:19,092 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 18:58:19,538 - main - WARNING - Incomplete data for NAS100
+2026-07-06 18:58:19,881 - main - WARNING - Incomplete data for US30
+2026-07-06 18:58:20,217 - main - WARNING - Incomplete data for SPX500
+2026-07-06 18:58:20,547 - main - WARNING - Incomplete data for UK100
+2026-07-06 18:58:20,876 - main - WARNING - Incomplete data for GER40
+2026-07-06 18:58:20,877 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 18:58:20,877 - main - INFO - No setups found in this scan
+2026-07-06 18:58:20,877 - main - INFO - Stats: 62 scans, 0 total setups found
+2026-07-06 18:59:20,887 - main - INFO - Active sessions: afternoon
+2026-07-06 18:59:20,889 - main - INFO - Starting full market scan...
+2026-07-06 18:59:20,890 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 18:59:20,894 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 18:59:21,792 - main - WARNING - Incomplete data for NAS100
+2026-07-06 18:59:22,138 - main - WARNING - Incomplete data for US30
+2026-07-06 18:59:22,524 - main - WARNING - Incomplete data for SPX500
+2026-07-06 18:59:22,965 - main - WARNING - Incomplete data for UK100
+2026-07-06 18:59:23,308 - main - WARNING - Incomplete data for GER40
+2026-07-06 18:59:23,309 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 18:59:23,310 - main - INFO - No setups found in this scan
+2026-07-06 18:59:23,311 - main - INFO - Stats: 63 scans, 0 total setups found
+2026-07-06 19:00:23,332 - main - INFO - Active sessions: afternoon
+2026-07-06 19:00:23,333 - main - INFO - Starting full market scan...
+2026-07-06 19:00:23,334 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:00:23,336 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:00:23,693 - main - WARNING - Incomplete data for NAS100
+2026-07-06 19:00:24,005 - main - WARNING - Incomplete data for US30
+2026-07-06 19:00:24,322 - main - WARNING - Incomplete data for SPX500
+2026-07-06 19:00:24,655 - main - WARNING - Incomplete data for UK100
+2026-07-06 19:00:24,990 - main - WARNING - Incomplete data for GER40
+2026-07-06 19:00:24,990 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:00:24,991 - main - INFO - No setups found in this scan
+2026-07-06 19:00:24,991 - main - INFO - Stats: 64 scans, 0 total setups found
+2026-07-06 19:01:25,007 - main - INFO - Active sessions: afternoon
+2026-07-06 19:01:25,008 - main - INFO - Starting full market scan...
+2026-07-06 19:01:25,008 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:01:25,008 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:01:25,353 - main - WARNING - Incomplete data for NAS100
+2026-07-06 19:01:25,656 - main - WARNING - Incomplete data for US30
+2026-07-06 19:01:25,979 - main - WARNING - Incomplete data for SPX500
+2026-07-06 19:01:26,277 - main - WARNING - Incomplete data for UK100
+2026-07-06 19:01:26,576 - main - WARNING - Incomplete data for GER40
+2026-07-06 19:01:26,576 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:01:26,577 - main - INFO - No setups found in this scan
+2026-07-06 19:01:26,577 - main - INFO - Stats: 65 scans, 0 total setups found
+2026-07-06 19:02:26,584 - main - INFO - Active sessions: afternoon
+2026-07-06 19:02:26,584 - main - INFO - Starting full market scan...
+2026-07-06 19:02:26,584 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:02:26,585 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:02:27,024 - main - WARNING - Incomplete data for NAS100
+2026-07-06 19:02:27,343 - main - WARNING - Incomplete data for US30
+2026-07-06 19:02:27,717 - main - WARNING - Incomplete data for SPX500
+2026-07-06 19:02:28,028 - main - WARNING - Incomplete data for UK100
+2026-07-06 19:02:28,340 - main - WARNING - Incomplete data for GER40
+2026-07-06 19:02:28,340 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:02:28,341 - main - INFO - No setups found in this scan
+2026-07-06 19:02:28,341 - main - INFO - Stats: 66 scans, 0 total setups found
+2026-07-06 19:03:28,358 - main - INFO - Active sessions: afternoon
+2026-07-06 19:03:28,359 - main - INFO - Starting full market scan...
+2026-07-06 19:03:28,359 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:03:28,361 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:03:28,705 - main - WARNING - Incomplete data for NAS100
+2026-07-06 19:03:29,016 - main - WARNING - Incomplete data for US30
+2026-07-06 19:03:29,340 - main - WARNING - Incomplete data for SPX500
+2026-07-06 19:03:29,657 - main - WARNING - Incomplete data for UK100
+2026-07-06 19:03:29,981 - main - WARNING - Incomplete data for GER40
+2026-07-06 19:03:29,981 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:03:29,982 - main - INFO - No setups found in this scan
+2026-07-06 19:03:29,982 - main - INFO - Stats: 67 scans, 0 total setups found
+2026-07-06 19:04:29,993 - main - INFO - Active sessions: afternoon
+2026-07-06 19:04:29,994 - main - INFO - Starting full market scan...
+2026-07-06 19:04:29,994 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:04:29,995 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:04:33,776 - main - WARNING - Incomplete data for NAS100
+2026-07-06 19:04:36,261 - main - WARNING - Incomplete data for US30
+2026-07-06 19:04:38,684 - main - WARNING - Incomplete data for SPX500
+2026-07-06 19:04:41,101 - main - WARNING - Incomplete data for UK100
+2026-07-06 19:04:43,561 - main - WARNING - Incomplete data for GER40
+2026-07-06 19:04:43,561 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:04:43,562 - main - INFO - No setups found in this scan
+2026-07-06 19:04:43,563 - main - INFO - Stats: 68 scans, 0 total setups found
+2026-07-06 19:06:03,903 - main - INFO - ICT Strategy Scanner initialized
+2026-07-06 19:06:03,903 - main - INFO - Monitoring 20 assets
+2026-07-06 19:06:03,903 - main - INFO - Macro windows: 10min before, 10min after
+2026-07-06 19:06:03,904 - main - INFO - Macro-only scanning: True
+2026-07-06 19:06:03,904 - main - INFO - Scanner started. Press Ctrl+C to stop.
+2026-07-06 19:06:03,904 - main - INFO - Current New York time: 2026-07-06 14:06:03 EDT
+2026-07-06 19:06:04,192 - main - INFO - Starting dashboard on http://localhost:5000...
+2026-07-06 19:06:06,194 - main - INFO - Dashboard started on http://localhost:5000
+2026-07-06 19:06:06,195 - main - INFO - Active sessions: afternoon
+2026-07-06 19:06:06,197 - main - INFO - Starting full market scan...
+2026-07-06 19:06:06,198 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:06:06,201 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:06:09,464 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:06:09,464 - main - INFO - No setups found in this scan
+2026-07-06 19:06:09,464 - main - INFO - Stats: 1 scans, 0 total setups found
+2026-07-06 19:07:09,475 - main - INFO - Active sessions: afternoon
+2026-07-06 19:07:09,477 - main - INFO - Starting full market scan...
+2026-07-06 19:07:09,478 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:07:09,481 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:07:11,101 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:07:11,102 - main - INFO - No setups found in this scan
+2026-07-06 19:07:11,102 - main - INFO - Stats: 2 scans, 0 total setups found
+2026-07-06 19:08:11,119 - main - INFO - Active sessions: afternoon
+2026-07-06 19:08:11,120 - main - INFO - Starting full market scan...
+2026-07-06 19:08:11,120 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:08:11,121 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:08:12,695 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:08:12,695 - main - INFO - No setups found in this scan
+2026-07-06 19:08:12,695 - main - INFO - Stats: 3 scans, 0 total setups found
+2026-07-06 19:09:12,704 - main - INFO - Active sessions: afternoon
+2026-07-06 19:09:12,704 - main - INFO - Starting full market scan...
+2026-07-06 19:09:12,705 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:09:12,705 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:09:14,320 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:09:14,320 - main - INFO - No setups found in this scan
+2026-07-06 19:09:14,321 - main - INFO - Stats: 4 scans, 0 total setups found
+2026-07-06 19:10:14,335 - main - INFO - Active sessions: afternoon
+2026-07-06 19:10:14,336 - main - INFO - Starting full market scan...
+2026-07-06 19:10:14,336 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:10:14,336 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:10:15,892 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:10:15,892 - main - INFO - No setups found in this scan
+2026-07-06 19:10:15,893 - main - INFO - Stats: 5 scans, 0 total setups found
+2026-07-06 19:11:15,898 - main - INFO - Active sessions: afternoon
+2026-07-06 19:11:15,898 - main - INFO - Starting full market scan...
+2026-07-06 19:11:15,899 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:11:15,899 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:11:17,486 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:11:17,486 - main - INFO - No setups found in this scan
+2026-07-06 19:11:17,487 - main - INFO - Stats: 6 scans, 0 total setups found
+2026-07-06 19:12:17,500 - main - INFO - Active sessions: afternoon
+2026-07-06 19:12:17,500 - main - INFO - Starting full market scan...
+2026-07-06 19:12:17,500 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:12:17,501 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:12:19,084 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:12:19,084 - main - INFO - No setups found in this scan
+2026-07-06 19:12:19,085 - main - INFO - Stats: 7 scans, 0 total setups found
+2026-07-06 19:13:19,092 - main - INFO - Active sessions: afternoon
+2026-07-06 19:13:19,093 - main - INFO - Starting full market scan...
+2026-07-06 19:13:19,094 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:13:19,096 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:13:20,684 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:13:20,684 - main - INFO - No setups found in this scan
+2026-07-06 19:13:20,685 - main - INFO - Stats: 8 scans, 0 total setups found
+2026-07-06 19:14:20,694 - main - INFO - Active sessions: afternoon
+2026-07-06 19:14:20,695 - main - INFO - Starting full market scan...
+2026-07-06 19:14:20,695 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:14:20,696 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:14:22,287 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:14:22,288 - main - INFO - No setups found in this scan
+2026-07-06 19:14:22,288 - main - INFO - Stats: 9 scans, 0 total setups found
+2026-07-06 19:15:22,292 - main - INFO - Active sessions: afternoon
+2026-07-06 19:15:22,292 - main - INFO - Starting full market scan...
+2026-07-06 19:15:22,292 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:15:22,293 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:15:23,856 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:15:23,857 - main - INFO - No setups found in this scan
+2026-07-06 19:15:23,857 - main - INFO - Stats: 10 scans, 0 total setups found
+2026-07-06 19:16:23,864 - main - INFO - Active sessions: afternoon
+2026-07-06 19:16:23,865 - main - INFO - Starting full market scan...
+2026-07-06 19:16:23,866 - main - INFO - Scanning forex assets (11 symbols)
+2026-07-06 19:16:23,868 - main - INFO - Scanning indices assets (5 symbols)
+2026-07-06 19:16:25,467 - main - INFO - Scanning crypto assets (4 symbols)
+2026-07-06 19:16:25,468 - main - INFO - No setups found in this scan
+2026-07-06 19:16:25,468 - main - INFO - Stats: 11 scans, 0 total setups found
+2026-07-06 19:28:43,880 - __main__ - ERROR - Backtest error: 'avg_pips'
