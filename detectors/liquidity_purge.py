@@ -15,7 +15,7 @@ class PurgeResult:
 class LiquidityPurgeDetector:
     def __init__(self, lookback: int = 20):
         self.lookback = lookback
-        self.min_range_pips = 10  # Minimum range to consider significant
+        self.min_range_pips = 5  # Reduced from 10 to be more sensitive
         self.require_confirmation = True
         
     def detect(self, data: pd.DataFrame) -> Optional[Dict]:
@@ -30,45 +30,41 @@ class LiquidityPurgeDetector:
         low = data['low'].values
         close = data['close'].values
         
-        # Calculate swing points
-        swing_highs = self._find_swing_highs(high)
-        swing_lows = self._find_swing_lows(low)
+        # Calculate pip size based on price level
+        pip_size = self._get_pip_size(data['close'].iloc[-1])
         
-        # Look for purge candidates
-        recent_swing_high = max(high[-self.lookback:-1])
-        recent_swing_low = min(low[-self.lookback:-1])
+        # Look for purge candidates - use recent range
+        recent_high = max(high[-self.lookback:-1])
+        recent_low = min(low[-self.lookback:-1])
         
         current_high = high[-1]
         current_low = low[-1]
         current_close = close[-1]
         
-        # Calculate pip size based on price level
-        pip_size = self._get_pip_size(data['close'].iloc[-1])
-        
-        # Detect buy setup (sweep below recent low)
-        if current_low < recent_swing_low - (pip_size * 0.5):
-            # Check for reversal confirmation
-            if current_close > recent_swing_low:
+        # Detect buy setup (sweep below recent low) - relaxed conditions
+        if current_low < recent_low + (pip_size * 0.3):  # More lenient
+            # Check for reversal confirmation (less strict)
+            if current_close > recent_low - (pip_size * 0.3):
                 strength = self._calculate_purge_strength(data, 'buy')
                 
                 return {
                     'type': 'buy',
-                    'level': recent_swing_low,
+                    'level': recent_low,
                     'strength': strength,
-                    'candles_since': self._candles_since_high(high, recent_swing_low),
+                    'candles_since': self._candles_since_high(high, recent_low),
                     'high_low_range': (current_high - current_low) / pip_size
                 }
         
-        # Detect sell setup (sweep above recent high)
-        if current_high > recent_swing_high + (pip_size * 0.5):
-            if current_close < recent_swing_high:
+        # Detect sell setup (sweep above recent high) - relaxed conditions
+        if current_high > recent_high - (pip_size * 0.3):  # More lenient
+            if current_close < recent_high + (pip_size * 0.3):
                 strength = self._calculate_purge_strength(data, 'sell')
                 
                 return {
                     'type': 'sell',
-                    'level': recent_swing_high,
+                    'level': recent_high,
                     'strength': strength,
-                    'candles_since': self._candles_since_low(low, recent_swing_high),
+                    'candles_since': self._candles_since_low(low, recent_high),
                     'high_low_range': (current_high - current_low) / pip_size
                 }
         
@@ -98,23 +94,31 @@ class LiquidityPurgeDetector:
         
         # Check volume (if available)
         if 'volume' in data.columns:
-            current_volume = data['volume'].iloc[-1]
-            avg_volume = data['volume'].iloc[-20:].mean()
-            if current_volume > avg_volume * 1.5:
-                strength += 0.3
-            elif current_volume > avg_volume:
-                strength += 0.15
+            try:
+                current_volume = data['volume'].iloc[-1]
+                avg_volume = data['volume'].iloc[-20:].mean()
+                if avg_volume > 0 and current_volume > avg_volume * 1.3:
+                    strength += 0.2
+                elif avg_volume > 0 and current_volume > avg_volume:
+                    strength += 0.1
+            except:
+                pass
         
-        # Check momentum
+        # Check momentum (relaxed)
         close = data['close'].values
-        if purge_type == 'buy':
-            # Bullish momentum
-            if close[-1] > close[-2] > close[-3]:
-                strength += 0.2
-        else:
-            # Bearish momentum
-            if close[-1] < close[-2] < close[-3]:
-                strength += 0.2
+        if len(close) >= 3:
+            if purge_type == 'buy':
+                # Bullish momentum
+                if close[-1] > close[-2]:
+                    strength += 0.15
+                if close[-2] > close[-3]:
+                    strength += 0.1
+            else:
+                # Bearish momentum
+                if close[-1] < close[-2]:
+                    strength += 0.15
+                if close[-2] < close[-3]:
+                    strength += 0.1
         
         return min(strength, 1.0)
     

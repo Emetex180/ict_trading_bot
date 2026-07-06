@@ -18,10 +18,11 @@ class Backtester:
     def __init__(self):
         self.liquidity_detector = LiquidityPurgeDetector(lookback=20)
         self.cisd_detector = CISDDetector(lookback=5)
-        self.fvg_detector = FVGDetector(min_gap=5, max_gap=50)
+        self.fvg_detector = FVGDetector(min_gap=3, max_gap=100)  # Made more sensitive
         self.results = []
         self.trades = []
         self.setups = []
+        self.debug_info = []
     
     def run_backtest(self, symbol: str, data_1h: pd.DataFrame, 
                      data_5m: pd.DataFrame, data_1m: pd.DataFrame,
@@ -33,24 +34,32 @@ class Backtester:
         
         self.trades = []
         self.setups = []
+        self.debug_info = []
         balance = initial_balance
         
-        # Iterate through each 1H candle
+        # Print data info for debugging
+        logger.info(f"Data shapes - 1H: {len(data_1h)}, 5M: {len(data_5m)}, 1M: {len(data_1m)}")
+        
+        # Iterate through each 1H candle (with lookback)
         for i in range(20, len(data_1h)):
             try:
                 current_1h = data_1h.iloc[:i+1]
                 current_time = data_1h.index[i]
                 
+                # Get corresponding 5M and 1M data
                 current_5m = data_5m[data_5m.index <= current_time]
                 current_1m = data_1m[data_1m.index <= current_time]
                 
                 if len(current_5m) < 5 or len(current_1m) < 3:
                     continue
                 
-                setup = self._detect_setup(current_1h, current_5m, current_1m)
+                # Detect setup
+                setup = self._detect_setup(current_1h, current_5m, current_1m, current_time)
                 
                 if setup:
                     self.setups.append(setup)
+                    
+                    # Simulate trade
                     trade = self._simulate_trade(
                         setup, 
                         data_1m, 
@@ -62,6 +71,9 @@ class Backtester:
                         self.trades.append(trade)
                         balance += trade['pnl']
                         
+                        # Log each trade for debugging
+                        logger.info(f"📊 Trade {len(self.trades)}: {setup['type']} at {trade['entry_price']:.5f} -> {trade['exit_price']:.5f} | PnL: ${trade['pnl']:.2f}")
+                        
             except Exception as e:
                 logger.error(f"Error in backtest iteration {i}: {e}")
                 continue
@@ -69,29 +81,39 @@ class Backtester:
         # Calculate metrics
         results = self._calculate_metrics(self.trades, initial_balance, symbol)
         results['setups'] = len(self.setups)
+        results['total_candles'] = len(data_1h)
+        
+        # Log summary
+        logger.info(f"✅ Backtest complete: {len(self.setups)} setups, {len(self.trades)} trades")
         
         # Generate visualizations
         self._generate_visualizations(symbol, data_1h, data_1m)
         
         return results
     
-    def _detect_setup(self, data_1h, data_5m, data_1m) -> Optional[Dict]:
-        """Detect a setup in the current data slice"""
+    def _detect_setup(self, data_1h, data_5m, data_1m, current_time) -> Optional[Dict]:
+        """Detect a setup in the current data slice with debugging"""
         try:
+            # Step 1: Detect Liquidity Purge
             purge = self.liquidity_detector.detect(data_1h)
             if not purge or not purge.get('type'):
                 return None
             
-            if not self.cisd_detector.detect(data_5m, purge['type']):
+            purge_type = purge['type']
+            
+            # Step 2: Check CISD
+            if not self.cisd_detector.detect(data_5m, purge_type):
                 return None
             
-            fvg = self.fvg_detector.detect(data_1m, purge['type'])
+            # Step 3: Check FVG
+            fvg = self.fvg_detector.detect(data_1m, purge_type)
             if not fvg:
                 return None
             
+            # Calculate entry and risk levels
             entry = (fvg['fvg_low'] + fvg['fvg_high']) / 2
             
-            if purge['type'] == 'buy':
+            if purge_type == 'buy':
                 stop_loss = fvg['fvg_low'] - (fvg['fvg_high'] - fvg['fvg_low']) * 0.5
                 take_profit = entry + (entry - stop_loss) * 2
             else:
@@ -99,13 +121,14 @@ class Backtester:
                 take_profit = entry - (stop_loss - entry) * 2
             
             return {
-                'type': 'BUY' if purge['type'] == 'buy' else 'SELL',
+                'type': 'BUY' if purge_type == 'buy' else 'SELL',
                 'entry': entry,
                 'stop_loss': stop_loss,
                 'take_profit': take_profit,
                 'fvg': fvg,
                 'purge': purge,
-                'timestamp': data_1h.index[-1]
+                'timestamp': current_time,
+                'gap_pips': fvg.get('gap_pips', 0)
             }
             
         except Exception as e:
@@ -122,9 +145,10 @@ class Backtester:
             take_profit = setup['take_profit']
             
             risk = abs(entry_price - stop_loss)
-            position_size = 1000
+            position_size = 1000  # Fixed position size
             
-            future_data = full_data.iloc[idx+1:idx+50]
+            # Look for exit in subsequent candles (up to 50 candles)
+            future_data = full_data.iloc[idx+1:idx+100]
             
             if len(future_data) == 0:
                 return None
@@ -146,9 +170,6 @@ class Backtester:
                         exit_price = stop_loss
                         exit_reason = 'stop_loss'
                         break
-                    else:
-                        exit_price = close
-                        exit_reason = 'close'
                 else:
                     if low <= take_profit:
                         exit_price = take_profit
@@ -158,18 +179,21 @@ class Backtester:
                         exit_price = stop_loss
                         exit_reason = 'stop_loss'
                         break
-                    else:
-                        exit_price = close
-                        exit_reason = 'close'
             
+            # If no exit found, use the last close
             if exit_price is None:
                 exit_price = future_data.iloc[-1]['close']
                 exit_reason = 'timeout'
             
+            # Calculate PnL
             if is_long:
-                pnl = (exit_price - entry_price) / abs(entry_price - stop_loss) * risk * position_size
+                pnl = (exit_price - entry_price) / risk * position_size
             else:
-                pnl = (entry_price - exit_price) / abs(entry_price - stop_loss) * risk * position_size
+                pnl = (entry_price - exit_price) / risk * position_size
+            
+            # Calculate pips
+            pip_size = 0.0001
+            pips = abs(exit_price - entry_price) / pip_size
             
             return {
                 'entry_time': entry_time,
@@ -181,8 +205,9 @@ class Backtester:
                 'position_size': position_size,
                 'pnl': pnl,
                 'result': exit_reason,
-                'pips': abs(exit_price - entry_price) / 0.0001,
-                'type': setup['type']
+                'pips': pips,
+                'type': setup['type'],
+                'gap_pips': setup.get('gap_pips', 0)
             }
             
         except Exception as e:
@@ -195,15 +220,18 @@ class Backtester:
             return {
                 'symbol': symbol,
                 'total_trades': 0,
+                'wins': 0,
+                'losses': 0,
                 'win_rate': 0,
                 'total_pnl': 0,
                 'avg_profit': 0,
+                'avg_pips': 0,
                 'max_drawdown': 0,
                 'sharpe_ratio': 0,
                 'final_balance': initial_balance,
-                'wins': 0,
-                'losses': 0,
-                'setups': 0
+                'setups': 0,
+                'total_setups': 0,
+                'total_candles': 0
             }
         
         total_trades = len(trades)
@@ -213,6 +241,7 @@ class Backtester:
         
         total_pnl = sum(t['pnl'] for t in trades)
         
+        # Calculate drawdown
         running_balance = initial_balance
         peak = initial_balance
         drawdowns = []
@@ -221,11 +250,12 @@ class Backtester:
             running_balance += trade['pnl']
             if running_balance > peak:
                 peak = running_balance
-            drawdown = (peak - running_balance) / peak * 100
+            drawdown = (peak - running_balance) / peak * 100 if peak > 0 else 0
             drawdowns.append(drawdown)
         
         max_drawdown = max(drawdowns) if drawdowns else 0
         
+        # Calculate Sharpe ratio
         returns = [t['pnl'] / initial_balance for t in trades]
         if returns and len(returns) > 1:
             avg_return = np.mean(returns)
@@ -248,41 +278,89 @@ class Backtester:
             'max_drawdown': round(max_drawdown, 2),
             'sharpe_ratio': round(sharpe_ratio, 2),
             'final_balance': round(initial_balance + total_pnl, 2),
-            'setups': 0
+            'setups': len(self.setups),
+            'total_setups': len(self.setups),
+            'total_candles': 0
         }
     
     def _generate_visualizations(self, symbol: str, data_1h: pd.DataFrame, data_1m: pd.DataFrame):
         """Generate visual charts for the backtest"""
         try:
-            import plotly.graph_objects as go
-            from plotly.subplots import make_subplots
-            
             # Create results directory
             os.makedirs('backtest_results', exist_ok=True)
             
-            # 1. Equity Curve
-            self._create_equity_curve(symbol)
-            
-            # 2. Trade Distribution
-            self._create_trade_distribution(symbol)
-            
-            # 3. Performance Summary Dashboard
-            self._create_performance_dashboard(symbol)
-            
-            # 4. Trade Map (entries/exits on price chart)
+            # Only create visualizations if there are trades
             if len(self.trades) > 0:
+                # 1. Equity Curve
+                self._create_equity_curve(symbol)
+                
+                # 2. Trade Distribution
+                self._create_trade_distribution(symbol)
+                
+                # 3. Performance Summary Dashboard
+                self._create_performance_dashboard(symbol)
+                
+                # 4. Trade Map
                 self._create_trade_map(symbol, data_1h, data_1m)
+            else:
+                logger.warning(f"No trades to visualize for {symbol}")
+                # Create a simple "no trades" report
+                self._create_no_trades_report(symbol)
             
             logger.info(f"Visualizations saved to backtest_results/")
             
         except Exception as e:
             logger.error(f"Error generating visualizations: {e}")
     
+    def _create_no_trades_report(self, symbol: str):
+        """Create a report when no trades are found"""
+        try:
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>No Trades Found - {symbol}</title>
+                <style>
+                    body {{ font-family: Arial; background: #0a0a0f; color: #e0e0e0; padding: 40px; }}
+                    .container {{ max-width: 800px; margin: 0 auto; }}
+                    .warning {{ background: #1a1a2e; padding: 30px; border-radius: 10px; border-left: 4px solid #ffaa00; }}
+                    h1 {{ color: #ffaa00; }}
+                    .info {{ background: #14141f; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="warning">
+                        <h1>⚠️ No Trades Found</h1>
+                        <p>Backtest on {symbol} found 0 trades.</p>
+                        <p>This could mean:</p>
+                        <ul>
+                            <li>The strategy conditions are too strict</li>
+                            <li>The data might be mock data (check MT5 connection)</li>
+                            <li>Not enough historical data</li>
+                            <li>The detectors need adjustment</li>
+                        </ul>
+                    </div>
+                    <div class="info">
+                        <h3>📊 Debug Information</h3>
+                        <p>Setups found: {len(self.setups)}</p>
+                        <p>Trades executed: {len(self.trades)}</p>
+                        <p>Data shape: {len(data_1h) if hasattr(self, 'data_1h') else 'N/A'}</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            with open(f'backtest_results/{symbol}_no_trades_report.html', 'w') as f:
+                f.write(html_content)
+                
+        except Exception as e:
+            logger.error(f"Error creating no trades report: {e}")
+    
     def _create_equity_curve(self, symbol: str):
         """Create equity curve chart"""
         try:
-            import plotly.graph_objects as go
-            
             if not self.trades:
                 return
             
@@ -310,7 +388,7 @@ class Backtester:
                          annotation_text="Initial Balance")
             
             fig.update_layout(
-                title=f'{symbol} - Equity Curve',
+                title=f'{symbol} - Equity Curve ({len(self.trades)} trades)',
                 xaxis_title='Date',
                 yaxis_title='Balance ($)',
                 template='plotly_dark',
@@ -326,9 +404,6 @@ class Backtester:
     def _create_trade_distribution(self, symbol: str):
         """Create trade distribution charts"""
         try:
-            import plotly.graph_objects as go
-            from plotly.subplots import make_subplots
-            
             if not self.trades:
                 return
             
@@ -358,7 +433,7 @@ class Backtester:
             )
             
             fig.update_layout(
-                title=f'{symbol} - Trade Distribution',
+                title=f'{symbol} - Trade Distribution ({len(self.trades)} trades)',
                 template='plotly_dark',
                 height=400
             )
@@ -371,8 +446,6 @@ class Backtester:
     def _create_performance_dashboard(self, symbol: str):
         """Create performance summary dashboard"""
         try:
-            import plotly.graph_objects as go
-            
             if not self.trades:
                 return
             
@@ -473,7 +546,7 @@ class Backtester:
             )
             
             fig.update_layout(
-                title=f'{symbol} - Performance Dashboard',
+                title=f'{symbol} - Performance Dashboard ({len(self.trades)} trades)',
                 template='plotly_dark',
                 height=600
             )
@@ -486,8 +559,6 @@ class Backtester:
     def _create_trade_map(self, symbol: str, data_1h: pd.DataFrame, data_1m: pd.DataFrame):
         """Create a price chart with trade entries and exits"""
         try:
-            import plotly.graph_objects as go
-            
             if not self.trades:
                 return
             
@@ -510,7 +581,7 @@ class Backtester:
             
             # Add trade entries and exits
             for trade in self.trades[:20]:  # Show last 20 trades
-                # Entry marker (green up for buy, red down for sell)
+                # Entry marker
                 entry_color = '#00ff88' if trade['type'] == 'BUY' else '#ff4444'
                 entry_symbol = 'triangle-up' if trade['type'] == 'BUY' else 'triangle-down'
                 
@@ -549,7 +620,7 @@ class Backtester:
                 ))
             
             fig.update_layout(
-                title=f'{symbol} - Trade Map (Last 200 Candles)',
+                title=f'{symbol} - Trade Map ({len(self.trades)} trades)',
                 xaxis_title='Date',
                 yaxis_title='Price',
                 template='plotly_dark',

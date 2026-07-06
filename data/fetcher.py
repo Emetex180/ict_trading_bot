@@ -1,9 +1,9 @@
-# data/fetcher.py - MT5 Version
+# data/fetcher.py - MT5 Version (FIXED)
 import MetaTrader5 as mt5
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 import logging
 import asyncio
 import time
@@ -17,6 +17,9 @@ class MarketDataFetcher:
         self.symbols = {}
         self.cache = {}
         self.last_request_time = {}
+        self.login = 5052695458
+        self.password = "LiK-B1Og"
+        self.server = "MetaQuotes-Demo"
         
         # Try to connect to MT5
         self._connect()
@@ -30,13 +33,8 @@ class MarketDataFetcher:
                 logger.error(f"Error: {mt5.last_error()}")
                 return False
             
-            # YOUR MT5 CREDENTIALS - Replace with your actual credentials
-            login = 5052695458          # <-- Your Login
-            password = "LiK-B1Og"       # <-- Your Password  
-            server = "MetaQuotes-Demo"  # <-- Your Server
-            
             # Attempt login
-            if not mt5.login(login=login, password=password, server=server):
+            if not mt5.login(login=self.login, password=self.password, server=self.server):
                 logger.error(f"MT5 login failed: {mt5.last_error()}")
                 # Try without login (might still work for some data)
                 logger.warning("Continuing with MT5 without login...")
@@ -72,6 +70,9 @@ class MarketDataFetcher:
     
     def _get_symbol_name(self, symbol: str) -> str:
         """Convert symbol to MT5 format"""
+        # Convert to uppercase first
+        symbol = symbol.upper()
+        
         # Common mappings
         symbol_map = {
             'EURUSD': 'EURUSD',
@@ -85,11 +86,13 @@ class MarketDataFetcher:
             'GBPJPY': 'GBPJPY',
             'AUDJPY': 'AUDJPY',
             'CHFJPY': 'CHFJPY',
+            'NAS100': 'NAS100',
             'USTEC': 'USTEC',
             'US30': 'US30',
             'SPX500': 'US500',
             'UK100': 'UK100',
             'GER40': 'GER40',
+            'DAX': 'GER40',
             'BTCUSD': 'BTCUSD',
             'ETHUSD': 'ETHUSD',
             'SOLUSD': 'SOLUSD',
@@ -132,18 +135,18 @@ class MarketDataFetcher:
         use_cache: bool = True
     ) -> Optional[pd.DataFrame]:
         """Fetch OHLCV data from MT5"""
-        # Check cache
-        cache_key = f"{symbol}_{timeframe}_{lookback}"
-        if use_cache and cache_key in self.cache:
-            cache_age = (datetime.now() - self.cache[cache_key]['timestamp']).seconds
-            if cache_age < 60:  # Cache for 60 seconds
-                return self.cache[cache_key]['data']
-        
-        if not self._ensure_connection():
-            logger.warning(f"No MT5 connection, using mock data for {symbol}")
-            return self.generate_mock_data(symbol, timeframe, lookback)
-        
         try:
+            # Check cache
+            cache_key = f"{symbol}_{timeframe}_{lookback}"
+            if use_cache and cache_key in self.cache:
+                cache_age = (datetime.now() - self.cache[cache_key]['timestamp']).seconds
+                if cache_age < 60:  # Cache for 60 seconds
+                    return self.cache[cache_key]['data']
+            
+            if not self._ensure_connection():
+                logger.warning(f"No MT5 connection, using mock data for {symbol}")
+                return self.generate_mock_data(symbol, timeframe, lookback)
+            
             # Get symbol in MT5 format
             mt5_symbol = self._get_symbol_name(symbol)
             mt5_timeframe = self._get_timeframe(timeframe)
@@ -199,9 +202,12 @@ class MarketDataFetcher:
     async def fetch_multi_timeframe(
         self, 
         symbol: str, 
-        timeframes: list = ['1m', '5m', '1h']
+        timeframes: List[str] = None
     ) -> Dict:
         """Fetch multiple timeframes for a symbol"""
+        if timeframes is None:
+            timeframes = ['1m', '5m', '1h']
+        
         result = {}
         for tf in timeframes:
             data = await self.fetch_data(symbol, tf)
@@ -212,10 +218,10 @@ class MarketDataFetcher:
     def fetch_historical_data(self, symbol: str, timeframe: str, 
                               start_date: datetime, end_date: datetime) -> Optional[pd.DataFrame]:
         """Fetch historical data between two dates for backtesting"""
-        if not self._ensure_connection():
-            return self.generate_mock_data(symbol, timeframe, 1000)
-        
         try:
+            if not self._ensure_connection():
+                return self.generate_mock_data(symbol, timeframe, 1000)
+            
             mt5_symbol = self._get_symbol_name(symbol)
             mt5_timeframe = self._get_timeframe(timeframe)
             
@@ -226,6 +232,7 @@ class MarketDataFetcher:
             rates = mt5.copy_rates_range(mt5_symbol, mt5_timeframe, start, end)
             
             if rates is None or len(rates) == 0:
+                logger.warning(f"No historical data for {mt5_symbol}, using mock data")
                 return self.generate_mock_data(symbol, timeframe, 1000)
             
             df = pd.DataFrame(rates)
@@ -256,7 +263,7 @@ class MarketDataFetcher:
             'BTCUSD': 60000, 'ETHUSD': 3000, 'SOLUSD': 150, 'XRPUSD': 0.50
         }
         
-        base_price = base_prices.get(symbol, 100.0)
+        base_price = base_prices.get(symbol.upper(), 100.0)
         
         # Generate price data with trend
         trend = np.random.normal(0, 0.0005, lookback)

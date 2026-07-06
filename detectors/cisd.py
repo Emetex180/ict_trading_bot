@@ -9,7 +9,7 @@ class CISDDetector:
     Detects structural breaks in price delivery
     """
     
-    def __init__(self, lookback: int = 5, min_strength: float = 0.6):
+    def __init__(self, lookback: int = 5, min_strength: float = 0.4):  # Reduced min_strength
         self.lookback = lookback
         self.min_strength = min_strength
         
@@ -45,35 +45,32 @@ class CISDDetector:
         """
         Bullish CISD: Price creates a new lower low, then breaks above previous swing high
         """
-        # Need at least 2 swing points
-        if len(swing_lows) < 2 or len(swing_highs) < 1:
+        # Need at least 1 swing point for basic detection
+        if len(swing_lows) < 1:
             return False
         
-        # Get recent swing points
+        # Get recent swing low
         recent_swing_low = swing_lows[-1][1] if swing_lows else None
-        previous_swing_high = swing_highs[-1][1] if swing_highs else None
         
-        if not recent_swing_low or not previous_swing_high:
+        if not recent_swing_low:
             return False
         
-        # Check conditions
+        # Check conditions (relaxed)
         conditions_met = 0
         total_conditions = 3
         
-        # 1. Lower low created
-        if low[-1] < recent_swing_low:
+        # 1. Lower low created (relaxed - allow small wicks)
+        if low[-1] < recent_swing_low * 0.999:  # 0.1% below
             conditions_met += 1
         
-        # 2. Close above previous swing high
-        if close[-1] > previous_swing_high:
+        # 2. Close above recent swing low (reversal)
+        if close[-1] > recent_swing_low:
             conditions_met += 1
         
         # 3. Momentum shift (closing price rises)
-        if close[-1] > close[-2] and close[-2] > close[-3]:
-            conditions_met += 1
-        
-        # 4. Volume confirmation (if available)
-        # This would be added if volume data exists
+        if len(close) >= 3:
+            if close[-1] > close[-2]:  # Just one candle of momentum
+                conditions_met += 1
         
         # Need at least 2 of 3 conditions
         return conditions_met >= 2
@@ -82,36 +79,36 @@ class CISDDetector:
         """
         Bearish CISD: Price creates a new higher high, then breaks below previous swing low
         """
-        if len(swing_highs) < 2 or len(swing_lows) < 1:
+        if len(swing_highs) < 1:
             return False
         
         recent_swing_high = swing_highs[-1][1] if swing_highs else None
-        previous_swing_low = swing_lows[-1][1] if swing_lows else None
         
-        if not recent_swing_high or not previous_swing_low:
+        if not recent_swing_high:
             return False
         
         conditions_met = 0
         total_conditions = 3
         
-        # 1. Higher high created
-        if high[-1] > recent_swing_high:
+        # 1. Higher high created (relaxed)
+        if high[-1] > recent_swing_high * 1.001:  # 0.1% above
             conditions_met += 1
         
-        # 2. Close below previous swing low
-        if close[-1] < previous_swing_low:
+        # 2. Close below recent swing high (reversal)
+        if close[-1] < recent_swing_high:
             conditions_met += 1
         
         # 3. Momentum shift (closing price falls)
-        if close[-1] < close[-2] and close[-2] < close[-3]:
-            conditions_met += 1
+        if len(close) >= 3:
+            if close[-1] < close[-2]:  # Just one candle of momentum
+                conditions_met += 1
         
         return conditions_met >= 2
     
     def _find_swing_highs(self, data: np.ndarray) -> list:
         """Find swing highs with min distance"""
         swings = []
-        min_distance = 2
+        min_distance = 1  # Reduced from 2 to be more sensitive
         
         for i in range(min_distance, len(data) - min_distance):
             is_swing = True
@@ -128,7 +125,7 @@ class CISDDetector:
     def _find_swing_lows(self, data: np.ndarray) -> list:
         """Find swing lows with min distance"""
         swings = []
-        min_distance = 2
+        min_distance = 1  # Reduced from 2 to be more sensitive
         
         for i in range(min_distance, len(data) - min_distance):
             is_swing = True
@@ -167,27 +164,24 @@ class CISDDetector:
         # Additional confirmation criteria
         close = data['close'].values[-10:]
         
-        # RSI-like momentum (simplified)
+        # Momentum (simplified)
         if purge_type == 'buy':
-            avg_gain = np.mean([c - prev for c, prev in zip(close[1:], close[:-1]) if c > prev])
-            avg_loss = abs(np.mean([c - prev for c, prev in zip(close[1:], close[:-1]) if c < prev]))
-            if avg_loss > 0:
-                rsi = 100 - (100 / (1 + avg_gain / avg_loss))
-                if rsi > 50:
-                    strength += 0.2
+            # Check if price is moving up
+            if len(close) >= 2 and close[-1] > close[-2]:
+                strength += 0.2
         else:
-            avg_gain = np.mean([c - prev for c, prev in zip(close[1:], close[:-1]) if c > prev])
-            avg_loss = abs(np.mean([c - prev for c, prev in zip(close[1:], close[:-1]) if c < prev]))
-            if avg_loss > 0:
-                rsi = 100 - (100 / (1 + avg_gain / avg_loss))
-                if rsi < 50:
-                    strength += 0.2
+            # Check if price is moving down
+            if len(close) >= 2 and close[-1] < close[-2]:
+                strength += 0.2
         
         # Volume confirmation (if available)
         if 'volume' in data.columns:
-            avg_volume = data['volume'].iloc[-20:].mean()
-            if data['volume'].iloc[-1] > avg_volume * 1.2:
-                strength += 0.3
+            try:
+                avg_volume = data['volume'].iloc[-20:].mean()
+                if avg_volume > 0 and data['volume'].iloc[-1] > avg_volume * 1.1:
+                    strength += 0.2
+            except:
+                pass
         
         result['is_valid'] = True
         result['strength'] = min(strength, 1.0)

@@ -920,3 +920,4 @@
 2026-07-06 19:16:25,468 - main - INFO - No setups found in this scan
 2026-07-06 19:16:25,468 - main - INFO - Stats: 11 scans, 0 total setups found
 2026-07-06 19:28:43,880 - __main__ - ERROR - Backtest error: 'avg_pips'
+2026-07-06 20:16:45,679 - __main__ - ERROR - Backtest error: 'avg_pips'

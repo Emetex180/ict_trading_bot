@@ -1,0 +1,14 @@
+symbol: EURUSD
+total_trades: 0
+wins: 0
+losses: 0
+win_rate: 0
+total_pnl: 0
+avg_profit: 0
+avg_pips: 0
+max_drawdown: 0
+sharpe_ratio: 0
+final_balance: 10000
+setups: 0
+total_setups: 0
+total_candles: 480
