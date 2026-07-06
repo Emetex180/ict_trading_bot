@@ -1,9 +1,12 @@
-# main.py (Updated with Macro Sessions)
+# main.py - Complete Fixed Version
 import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 import time
+import sys
+import os
+import threading
 
 from config import (
     ALL_SYMBOLS, ASSET_CATEGORIES, MACRO_CONFIG,
@@ -19,45 +22,56 @@ from utils.sessions import SessionManager
 from utils.database import Database
 from utils.logger import setup_logger
 
+# Setup logger
 logger = setup_logger(__name__)
 
 class ICTStrategyScanner:
     def __init__(self):
         """Initialize all components"""
-        self.liquidity_detector = LiquidityPurgeDetector(
-            lookback=TRADING_CONFIG['liquidity_lookback']
-        )
-        self.cisd_detector = CISDDetector(
-            lookback=TRADING_CONFIG['cisd_lookback']
-        )
-        self.fvg_detector = FVGDetector(
-            min_gap=TRADING_CONFIG['min_gap_pips'],
-            max_gap=TRADING_CONFIG['max_gap_pips']
-        )
-        
-        self.data_fetcher = MarketDataFetcher()
-        self.session_manager = SessionManager()
-        self.database = Database()
-        
-        # Initialize notifiers
-        self.telegram = TelegramNotifier(
-            TELEGRAM_CONFIG['bot_token'],
-            TELEGRAM_CONFIG['chat_ids']
-        )
-        self.discord = DiscordNotifier(
-            DISCORD_CONFIG['webhook_url']
-        )
-        
-        # Statistics
-        self.scan_count = 0
-        self.setups_found = 0
-        self.last_scan_time = None
-        self.session_stats = {session: 0 for session in self.session_manager.sessions.keys()}
-        
-        logger.info("🚀 ICT Strategy Scanner initialized")
-        logger.info(f"📊 Monitoring {len(ALL_SYMBOLS)} assets")
-        logger.info(f"🕐 Macro windows: {MACRO_CONFIG['minutes_before']}min before, {MACRO_CONFIG['minutes_after']}min after")
-        logger.info(f"🔄 Macro-only scanning: {MACRO_CONFIG['scan_during_macro_only']}")
+        try:
+            self.liquidity_detector = LiquidityPurgeDetector(
+                lookback=TRADING_CONFIG['liquidity_lookback']
+            )
+            self.cisd_detector = CISDDetector(
+                lookback=TRADING_CONFIG['cisd_lookback']
+            )
+            self.fvg_detector = FVGDetector(
+                min_gap=TRADING_CONFIG['min_gap_pips'],
+                max_gap=TRADING_CONFIG['max_gap_pips']
+            )
+            
+            self.data_fetcher = MarketDataFetcher()
+            self.session_manager = SessionManager()
+            self.database = Database()
+            
+            # Initialize notifiers
+            self.telegram = TelegramNotifier(
+                TELEGRAM_CONFIG.get('bot_token', ''),
+                TELEGRAM_CONFIG.get('chat_ids', [])
+            )
+            self.discord = DiscordNotifier(
+                DISCORD_CONFIG.get('webhook_url', '')
+            )
+            
+            # Statistics
+            self.scan_count = 0
+            self.setups_found = 0
+            self.last_scan_time = None
+            
+            # Get session stats safely
+            self.session_stats = {}
+            if hasattr(self.session_manager, 'sessions'):
+                self.session_stats = {session: 0 for session in self.session_manager.sessions.keys()}
+            
+            # Log startup info
+            logger.info("ICT Strategy Scanner initialized")
+            logger.info(f"Monitoring {len(ALL_SYMBOLS)} assets")
+            logger.info(f"Macro windows: {MACRO_CONFIG['minutes_before']}min before, {MACRO_CONFIG['minutes_after']}min after")
+            logger.info(f"Macro-only scanning: {MACRO_CONFIG['scan_during_macro_only']}")
+            
+        except Exception as e:
+            logger.error(f"Error initializing scanner: {e}")
+            raise
 
     async def scan_asset(self, symbol: str) -> Optional[Dict]:
         """Scan a single asset for setups"""
@@ -86,12 +100,12 @@ class ICTStrategyScanner:
             )
             
             if not all([data_1h is not None, data_5m is not None, data_1m is not None]):
-                logger.warning(f"⚠️ Incomplete data for {symbol}")
+                logger.warning(f"Incomplete data for {symbol}")
                 return None
             
             # Step 1: Detect Liquidity Purge on 1H
             purge = self.liquidity_detector.detect(data_1h)
-            if not purge or not purge['type']:
+            if not purge or not purge.get('type'):
                 return None
             
             # Step 2: Check CISD on 5M
@@ -134,7 +148,7 @@ class ICTStrategyScanner:
                 'position_size': self.calculate_position_size(stop_loss, entry_price),
                 
                 # Detector outputs
-                'purge_level': purge['level'],
+                'purge_level': purge.get('level', 0),
                 'purge_strength': purge.get('strength', 0.5),
                 'fvg_details': fvg,
                 
@@ -142,7 +156,7 @@ class ICTStrategyScanner:
                 'market_phase': self.get_market_phase(data_1h),
                 'daily_range': self.calculate_daily_range(data_1h),
                 
-                # Confidence score (now includes session priority)
+                # Confidence score
                 'confidence': self.calculate_confidence(purge, fvg, best_session)
             }
             
@@ -158,61 +172,57 @@ class ICTStrategyScanner:
 
     def get_macro_status(self, symbol: str, session_name: str) -> Dict:
         """Get macro window status for the current time"""
-        ny_time = self.session_manager.get_current_ny_time()
-        session = self.session_manager.sessions.get(session_name)
-        
-        if not session:
-            return {'status': 'unknown', 'macro_active': False}
-        
-        current_minutes = ny_time.hour * 60 + ny_time.minute
-        start_minutes = session.start_hour * 60 + session.start_minute
-        end_minutes = session.end_hour * 60 + session.end_minute
-        
-        macro_start = start_minutes - MACRO_CONFIG['minutes_before']
-        macro_end = end_minutes + MACRO_CONFIG['minutes_after']
-        
-        # Determine if in macro window
-        is_in_macro = False
-        status = 'outside'
-        
-        if macro_start <= current_minutes < start_minutes:
-            is_in_macro = True
-            status = 'pre_session'
-            minutes_until = start_minutes - current_minutes
-        elif start_minutes <= current_minutes < end_minutes:
-            is_in_macro = True
-            status = 'active'
-            minutes_until = 0
-        elif end_minutes <= current_minutes < macro_end:
-            is_in_macro = True
-            status = 'post_session'
-            minutes_until = 0
-        else:
-            is_in_macro = False
+        try:
+            ny_time = self.session_manager.get_current_ny_time()
+            session = self.session_manager.sessions.get(session_name)
+            
+            if not session:
+                return {'status': 'unknown', 'macro_active': False}
+            
+            current_minutes = ny_time.hour * 60 + ny_time.minute
+            start_minutes = session.start_hour * 60 + session.start_minute
+            end_minutes = session.end_hour * 60 + session.end_minute
+            
+            macro_start = start_minutes - MACRO_CONFIG['minutes_before']
+            macro_end = end_minutes + MACRO_CONFIG['minutes_after']
+            
+            # Determine if in macro window
             status = 'outside'
-            # Calculate minutes until next session
-            if current_minutes < start_minutes:
+            minutes_until = 0
+            
+            if macro_start <= current_minutes < start_minutes:
+                status = 'pre_session'
                 minutes_until = start_minutes - current_minutes
+            elif start_minutes <= current_minutes < end_minutes:
+                status = 'active'
+                minutes_until = 0
+            elif end_minutes <= current_minutes < macro_end:
+                status = 'post_session'
+                minutes_until = 0
             else:
-                minutes_until = (1440 - current_minutes) + start_minutes
-        
-        return {
-            'status': status,
-            'macro_active': is_in_macro,
-            'minutes_until_start': max(0, start_minutes - current_minutes) if status != 'active' else 0,
-            'minutes_remaining': max(0, end_minutes - current_minutes) if status == 'active' else 0,
-            'session_start': f"{session.start_hour:02d}:{session.start_minute:02d}",
-            'session_end': f"{session.end_hour:02d}:{session.end_minute:02d}",
-            'macro_start': f"{macro_start // 60:02d}:{macro_start % 60:02d}",
-            'macro_end': f"{macro_end // 60:02d}:{macro_end % 60:02d}"
-        }
+                status = 'outside'
+                if current_minutes < start_minutes:
+                    minutes_until = start_minutes - current_minutes
+                else:
+                    minutes_until = (1440 - current_minutes) + start_minutes
+            
+            return {
+                'status': status,
+                'macro_active': status in ['pre_session', 'active', 'post_session'],
+                'minutes_until_start': max(0, start_minutes - current_minutes) if status != 'active' else 0,
+                'minutes_remaining': max(0, end_minutes - current_minutes) if status == 'active' else 0,
+                'session_start': f"{session.start_hour:02d}:{session.start_minute:02d}",
+                'session_end': f"{session.end_hour:02d}:{session.end_minute:02d}",
+                'macro_start': f"{macro_start // 60:02d}:{macro_start % 60:02d}",
+                'macro_end': f"{macro_end // 60:02d}:{macro_end % 60:02d}"
+            }
+        except Exception as e:
+            logger.error(f"Error getting macro status: {e}")
+            return {'status': 'error', 'macro_active': False}
 
     def calculate_entry_price(self, purge: Dict, fvg: Dict) -> float:
         """Calculate optimal entry price"""
-        if fvg['type'] == 'bullish':
-            return (fvg['fvg_low'] + fvg['fvg_high']) / 2
-        else:
-            return (fvg['fvg_low'] + fvg['fvg_high']) / 2
+        return (fvg['fvg_low'] + fvg['fvg_high']) / 2
 
     def calculate_stop_loss(self, purge: Dict, fvg: Dict) -> float:
         """Calculate stop loss based on setup"""
@@ -241,7 +251,6 @@ class ICTStrategyScanner:
 
     def get_market_phase(self, data) -> str:
         """Determine market phase"""
-        # Simplified - would use ATR, ADX, etc.
         return "Trending"
 
     def calculate_daily_range(self, data) -> float:
@@ -259,26 +268,23 @@ class ICTStrategyScanner:
             score += 10
         
         # Add for FVG quality
-        if fvg['gap_pips'] > 10 and fvg['gap_pips'] < 30:
+        if fvg.get('gap_pips', 0) > 10 and fvg.get('gap_pips', 0) < 30:
             score += 10
-        elif fvg['gap_pips'] > 5 and fvg['gap_pips'] < 50:
+        elif fvg.get('gap_pips', 0) > 5 and fvg.get('gap_pips', 0) < 50:
             score += 5
         
         # Add for session priority
-        priority = self.session_manager.get_session_priority(session)
-        score += priority * 2
-        
-        # Macro window bonus
-        if fvg.get('macro_status', {}).get('status') == 'active':
-            score += 5
-        elif fvg.get('macro_status', {}).get('status') in ['pre_session', 'post_session']:
-            score += 3
+        try:
+            priority = self.session_manager.get_session_priority(session)
+            score += priority * 2
+        except:
+            pass
         
         return min(score, 100)
 
     async def scan_all_assets(self):
         """Scan all assets in watchlist with session filtering"""
-        logger.info("🔄 Starting full market scan...")
+        logger.info("Starting full market scan...")
         self.scan_count += 1
         self.last_scan_time = datetime.utcnow()
         
@@ -294,7 +300,7 @@ class ICTStrategyScanner:
         
         # Scan each category with its specific sessions
         for category, symbols in assets_by_category.items():
-            logger.info(f"📂 Scanning {category} assets ({len(symbols)} symbols)")
+            logger.info(f"Scanning {category} assets ({len(symbols)} symbols)")
             
             for symbol in symbols:
                 setup = await self.scan_asset(symbol)
@@ -303,99 +309,112 @@ class ICTStrategyScanner:
         
         if setups:
             self.setups_found += len(setups)
-            logger.info(f"🎯 Found {len(setups)} setups across {len(setups)} assets!")
+            logger.info(f"Found {len(setups)} setups!")
             
             # Send notifications with session context
             for setup in setups:
                 await self.send_notifications(setup)
-                self.database.save_setup(setup)
+                try:
+                    self.database.save_setup(setup)
+                except Exception as e:
+                    logger.error(f"Error saving setup: {e}")
                 
                 # Log the session status
-                session_name = setup['session']
-                macro_status = setup['macro_status']['status']
-                logger.info(f"📊 {setup['symbol']} - {setup['type']} setup in {session_name} session ({macro_status})")
+                session_name = setup.get('session', 'unknown')
+                macro_status = setup.get('macro_status', {}).get('status', 'unknown')
+                logger.info(f"{setup['symbol']} - {setup['type']} setup in {session_name} session ({macro_status})")
         else:
-            logger.info("❌ No setups found in this scan")
+            logger.info("No setups found in this scan")
         
         return setups
 
     async def send_notifications(self, setup: Dict):
         """Send notifications to all configured channels"""
-        # Send to Telegram with macro status
-        await self.telegram.send_alert(setup)
+        try:
+            await self.telegram.send_alert(setup)
+        except Exception as e:
+            logger.error(f"Error sending Telegram notification: {e}")
         
-        # Send to Discord
-        await self.discord.send_alert(setup)
+        try:
+            await self.discord.send_alert(setup)
+        except Exception as e:
+            logger.error(f"Error sending Discord notification: {e}")
         
-        # Print to console with session context
+        # Print to console
         self.print_setup(setup)
 
     def print_setup(self, setup: Dict):
         """Print setup to console with session and macro status"""
-        emoji = "✅" if setup['type'] == 'BUY' else "🔴"
-        color = "\033[92m" if setup['type'] == 'BUY' else "\033[91m"
-        reset = "\033[0m"
-        
-        # Session emojis
-        session_emojis = {
-            'asian': '🌏',
-            'london': '🇬🇧',
-            'new_york': '🗽',
-            'sweet_spot': '🎯',
-            'afternoon': '🌆',
-            'power_hour': '⚡'
-        }
-        session_emoji = session_emojis.get(setup['session'], '🕐')
-        
-        # Macro status indicators
-        macro_status = setup['macro_status']
-        status_indicators = {
-            'active': '🟢 LIVE',
-            'pre_session': '🔵 WARMUP',
-            'post_session': '🟡 COOLDOWN',
-            'outside': '⚪ OFFSESSION'
-        }
-        status_indicator = status_indicators.get(macro_status['status'], '⚪')
-        
-        print(f"\n{color}{'='*70}{reset}")
-        print(f"{emoji} {color}{setup['type']} SETUP DETECTED{reset}")
-        print(f"{'='*70}")
-        print(f"Symbol:       {setup['symbol']}")
-        print(f"Session:      {session_emoji} {setup['session']} ({status_indicator})")
-        print(f"Priority:     {setup['session_priority']}/10")
-        print(f"Confidence:   {setup['confidence']}%")
-        
-        # Macro window details
-        print(f"\n📊 Macro Window:")
-        print(f"  Status:     {macro_status['status'].upper()}")
-        print(f"  Window:     {macro_status['macro_start']} - {macro_status['macro_end']} ET")
-        print(f"  Session:    {macro_status['session_start']} - {macro_status['session_end']} ET")
-        if macro_status['status'] == 'active':
-            print(f"  Remaining:  {macro_status['minutes_remaining']} min")
-        elif macro_status['status'] == 'pre_session':
-            print(f"  Starts in:  {macro_status['minutes_until_start']} min")
-        
-        # Entry details
-        print(f"\n📈 Entry Zone:   {setup['entry_low']} - {setup['entry_high']}")
-        print(f"💹 Entry Price:  {setup['entry_price']}")
-        print(f"🛑 Stop Loss:    {setup['stop_loss']}")
-        print(f"🎯 Take Profit:  {setup['take_profit']}")
-        print(f"📐 Risk/Reward:  1:{setup['risk_reward_ratio']}")
-        print(f"💼 Position Size: {setup['position_size']} units")
-        print(f"📏 Gap Size:     {setup['gap_pips']:.1f} pips")
-        print(f"⏰ Time:         {setup['timestamp']}")
-        print(f"{'='*70}\n")
+        try:
+            emoji = "BUY" if setup['type'] == 'BUY' else "SELL"
+            print(f"\n{'='*60}")
+            print(f"{emoji} SETUP DETECTED")
+            print(f"{'='*60}")
+            print(f"Symbol:       {setup['symbol']}")
+            print(f"Session:      {setup.get('session', 'unknown')}")
+            print(f"Confidence:   {setup.get('confidence', 0)}%")
+            
+            # Entry details
+            print(f"\nEntry Zone:   {setup['entry_low']} - {setup['entry_high']}")
+            print(f"Entry Price:  {setup['entry_price']}")
+            print(f"Stop Loss:    {setup['stop_loss']}")
+            print(f"Take Profit:  {setup['take_profit']}")
+            print(f"Risk/Reward:  1:{setup['risk_reward_ratio']}")
+            print(f"Position Size: {setup['position_size']} units")
+            print(f"Gap Size:     {setup['gap_pips']:.1f} pips")
+            print(f"Time:         {setup['timestamp']}")
+            print(f"{'='*60}\n")
+        except Exception as e:
+            logger.error(f"Error printing setup: {e}")
 
     async def run(self):
         """Main scanner loop with session-aware scheduling"""
-        logger.info("🔄 Scanner started. Press Ctrl+C to stop.")
-        logger.info(f"🕐 Current New York time: {self.session_manager.get_current_ny_time().strftime('%Y-%m-%d %H:%M:%S %Z')}")
+        logger.info("Scanner started. Press Ctrl+C to stop.")
         
-        # Start dashboard in background
-        from dashboard.app import Dashboard
-        dashboard = Dashboard(self)
-        asyncio.create_task(dashboard.run())
+        try:
+            current_time = self.session_manager.get_current_ny_time()
+            logger.info(f"Current New York time: {current_time.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+        except Exception as e:
+            logger.error(f"Error getting time: {e}")
         
+        # ============================================================
+        # START DASHBOARD - FIXED VERSION
+        # ============================================================
+        try:
+            from dashboard.app import Dashboard
+            
+            dashboard = Dashboard(self)
+            
+            def run_dashboard():
+                try:
+                    logger.info("Starting dashboard on http://localhost:5000...")
+                    dashboard.run(host='127.0.0.1', port=5000)
+                except Exception as e:
+                    logger.error(f"Dashboard error: {e}")
+                    # Try alternative port
+                    try:
+                        logger.info("Trying port 5001...")
+                        dashboard.run(host='127.0.0.1', port=5001)
+                    except Exception as e2:
+                        logger.error(f"Could not start dashboard on any port: {e2}")
+            
+            # Run dashboard in a separate thread (non-blocking)
+            thread = threading.Thread(target=run_dashboard, daemon=True)
+            thread.start()
+            
+            # Give it a moment to start
+            await asyncio.sleep(2)
+            logger.info("Dashboard started on http://localhost:5000")
+            
+        except ImportError as e:
+            logger.warning(f"Flask not installed: {e}")
+            logger.info("Install: pip install Flask Flask-CORS")
+        except Exception as e:
+            logger.warning(f"Could not start dashboard: {e}")
+        
+        # ============================================================
+        # MAIN SCANNING LOOP
+        # ============================================================
         while True:
             try:
                 ny_time = self.session_manager.get_current_ny_time()
@@ -404,29 +423,30 @@ class ICTStrategyScanner:
                 active_sessions = self.session_manager.get_active_sessions()
                 
                 if active_sessions:
-                    logger.info(f"🟢 Active sessions: {', '.join(active_sessions)}")
+                    logger.info(f"Active sessions: {', '.join(active_sessions)}")
                     await self.scan_all_assets()
                 else:
                     # Find next session
-                    next_session = self.session_manager.get_next_session_start()
-                    if next_session:
-                        wait_minutes = next_session['wait_minutes'] - MACRO_CONFIG['minutes_before']
-                        if wait_minutes > 0:
-                            logger.info(f"⏰ Next session: {next_session['name']} starts at {next_session['start_time']} ET (in {wait_minutes:.0f} min)")
-                            
-                            # Sleep until macro window starts
-                            if wait_minutes > 5:
-                                await asyncio.sleep(60)  # Check every minute
-                                continue
+                    try:
+                        next_session = self.session_manager.get_next_session_start()
+                        if next_session:
+                            wait_minutes = next_session.get('wait_minutes', 0) - MACRO_CONFIG['minutes_before']
+                            if wait_minutes > 0:
+                                logger.info(f"Next session: {next_session['name']} starts at {next_session['start_time']} ET (in {wait_minutes:.0f} min)")
+                                if wait_minutes > 5:
+                                    await asyncio.sleep(60)
+                                    continue
+                    except Exception as e:
+                        logger.error(f"Error getting next session: {e}")
                 
                 # Update statistics
-                logger.info(f"📊 Stats: {self.scan_count} scans, {self.setups_found} total setups found")
+                logger.info(f"Stats: {self.scan_count} scans, {self.setups_found} total setups found")
                 
                 # Wait before next scan
                 await asyncio.sleep(60)
                 
             except KeyboardInterrupt:
-                logger.info("🛑 Scanner stopped by user")
+                logger.info("Scanner stopped by user")
                 break
             except Exception as e:
                 logger.error(f"Error in main loop: {e}")
@@ -437,8 +457,19 @@ class ICTStrategyScanner:
 # =================================================
 
 async def main():
-    scanner = ICTStrategyScanner()
-    await scanner.run()
+    try:
+        scanner = ICTStrategyScanner()
+        await scanner.run()
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user")
+    except Exception as e:
+        logger.error(f"Fatal error: {e}")
+        raise
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nBot stopped by user")
+    except Exception as e:
+        print(f"Error: {e}")

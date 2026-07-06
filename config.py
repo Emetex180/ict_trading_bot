@@ -13,7 +13,7 @@ class TimezoneConfig:
     def __init__(self):
         self.ny_tz = pytz.timezone('America/New_York')
         self.utc_tz = pytz.UTC
-    
+        
     def get_ny_time(self) -> datetime:
         """Get current New York time with DST awareness"""
         return datetime.now(self.ny_tz)
@@ -169,7 +169,16 @@ SESSIONS = {
     )
 }
 
+# =================================================
+# FIX: Add ICT_SESSIONS as an alias for SESSIONS
+# =================================================
+
+ICT_SESSIONS = SESSIONS  # <-- ADD THIS LINE
+
+# =================================================
 # Asset categories with their allowed sessions
+# =================================================
+
 ASSET_SESSIONS = {
     'forex': ['asian', 'london', 'new_york'],
     'crypto': ['asian', 'london', 'new_york'],
@@ -223,7 +232,7 @@ ALLOWED_SESSIONS = ['asian', 'london', 'new_york', 'sweet_spot', 'afternoon', 'p
 # =================================================
 
 OANDA_CONFIG = {
-    'api_key': 'YOUR_OANDA_API_KEY',  # Replace with your API key
+    'api_key': 'e260ed15-e3ae-47eb-9df2-71840ab5ae84',  # Replace with your API key
     'account_id': 'YOUR_OANDA_ACCOUNT_ID',  # Replace with your account ID
     'environment': 'practice',  # 'practice' or 'live'
     'base_url': 'https://api-fxpractice.oanda.com/v3'  # Use 'https://api-fxtrade.oanda.com/v3' for live
@@ -266,7 +275,7 @@ LOG_FILE = 'logs/trading_bot.log'
 class SessionManager:
     def __init__(self):
         self.ny_tz = pytz.timezone('America/New_York')
-        self.sessions = SESSIONS
+        self.sessions = ICT_SESSIONS  # <-- Changed from SESSIONS to ICT_SESSIONS
         self.asset_sessions = ASSET_SESSIONS
         self.asset_categories = ASSET_CATEGORIES
         

@@ -1,0 +1,12 @@
+2026-07-06 17:39:54,302 - main - INFO - ICT Strategy Scanner initialized
+2026-07-06 17:39:54,302 - main - INFO - Monitoring 20 assets
+2026-07-06 17:39:54,302 - main - INFO - Macro windows: 10min before, 10min after
+2026-07-06 17:39:54,303 - main - INFO - Macro-only scanning: True
+2026-07-06 17:39:54,303 - main - INFO - Scanner started. Press Ctrl+C to stop.
+2026-07-06 17:39:54,303 - main - INFO - Current New York time: 2026-07-06 12:39:54 EDT
+2026-07-06 17:39:54,457 - main - WARNING - Could not start dashboard: attempted relative import beyond top-level package
+2026-07-06 17:39:54,457 - main - INFO - Next session: afternoon starts at 13:00 ET (in 11 min)
+2026-07-06 17:40:54,466 - main - INFO - Next session: afternoon starts at 13:00 ET (in 10 min)
+2026-07-06 17:41:54,477 - main - INFO - Next session: afternoon starts at 13:00 ET (in 9 min)
+2026-07-06 17:42:54,491 - main - INFO - Next session: afternoon starts at 13:00 ET (in 8 min)
+2026-07-06 17:43:54,493 - main - INFO - Next session: afternoon starts at 13:00 ET (in 7 min)
